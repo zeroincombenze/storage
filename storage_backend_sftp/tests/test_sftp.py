@@ -2,7 +2,7 @@
 # @author Sébastien BEAU <sebastien.beau@akretion.com>
 # Copyright 2019 Camptocamp (http://www.camptocamp.com).
 # @author Simone Orsi <simone.orsi@camptocamp.com>
-# License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl).
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 # pylint: disable=missing-manifest-dependency
 # disable warning on 'vcr' missing in manifest: this is only a dependency for
@@ -14,20 +14,18 @@ import os
 
 import mock
 
-from odoo.addons.storage_backend.tests.common import BackendStorageTestMixin, CommonCase
+from odoo.addons.storage_backend.tests.common import Common, GenericStoreCase
 
 _logger = logging.getLogger(__name__)
 
 MOD_PATH = "odoo.addons.storage_backend_sftp.components.sftp_adapter"
-ADAPTER_PATH = MOD_PATH + ".SFTPStorageBackendAdapter"
 PARAMIKO_PATH = MOD_PATH + ".paramiko"
 
 
-class SftpCase(CommonCase, BackendStorageTestMixin):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.backend.write(
+class SftpCase(Common, GenericStoreCase):
+    def setUp(self):
+        super(SftpCase, self).setUp()
+        self.backend.write(
             {
                 "backend_type": "sftp",
                 "sftp_login": "foo",
@@ -37,7 +35,7 @@ class SftpCase(CommonCase, BackendStorageTestMixin):
                 "directory_path": "upload",
             }
         )
-        cls.case_with_subdirectory = "upload/subdirectory/here"
+        self.case_with_subdirectory = "upload/subdirectory/here"
 
     @mock.patch(MOD_PATH + ".sftp_mkdirs")
     @mock.patch(PARAMIKO_PATH)
@@ -48,13 +46,13 @@ class SftpCase(CommonCase, BackendStorageTestMixin):
         # general
         client.stat.side_effect = exc
         with self.assertRaises(IOError):
-            self.backend.add("fake/path", b"fake data")
+            self.backend._add_bin_data("fake/path", b"fake data")
         # not found
         exc.errno = errno.ENOENT
         client.stat.side_effect = exc
         fakefile = open("/tmp/fakefile.txt", "w+b")
         client.open.return_value = fakefile
-        self.backend.add("fake/path", b"fake data")
+        self.backend._add_bin_data("fake/path", b"fake data")
         # mkdirs has been called
         mocked_mkdirs.assert_called()
         # file has been written and closed
@@ -68,7 +66,7 @@ class SftpCase(CommonCase, BackendStorageTestMixin):
         with open("/tmp/fakefile2.txt", "w+b") as fakefile:
             fakefile.write(b"filecontent")
         client.open.return_value = open("/tmp/fakefile2.txt", "r")
-        self.assertEqual(self.backend.get("fake/path"), "filecontent")
+        self.assertEqual(self.backend._get_bin_data("fake/path"), "filecontent")
 
     @mock.patch(PARAMIKO_PATH)
     def test_list(self, mocked_paramiko):
@@ -78,40 +76,18 @@ class SftpCase(CommonCase, BackendStorageTestMixin):
         # general
         client.listdir.side_effect = exc
         with self.assertRaises(IOError):
-            self.backend.list_files()
+            self.backend._list()
         # not found
         exc.errno = errno.ENOENT
         client.listdir.side_effect = exc
-        self.assertEqual(self.backend.list_files(), [])
+        self.assertEqual(self.backend._list(), [])
 
-    def test_find_files(self):
-        good_filepaths = ["somepath/file%d.good" % x for x in range(1, 10)]
-        bad_filepaths = ["somepath/file%d.bad" % x for x in range(1, 10)]
-        mocked_filepaths = bad_filepaths + good_filepaths
-        backend = self.backend.sudo()
-        expected = good_filepaths[:]
-        expected = [backend.directory_path + "/" + path for path in good_filepaths]
-        self._test_find_files(
-            backend, ADAPTER_PATH, mocked_filepaths, r".*\.good$", expected
-        )
+    def test_setting_and_getting_data_from_root(self):
+        # bypass as we tested all the methods mocked specifically above.
+        # Would be nice to have an integration test but is not feasible ATM.
+        pass
 
-    @mock.patch(PARAMIKO_PATH)
-    def test_move_files(self, mocked_paramiko):
-        client = mocked_paramiko.SFTPClient.from_transport()
-        # simulate file is not already there
-        client.lstat.side_effect = FileNotFoundError()
-        to_move = "move/from/path/myfile.txt"
-        to_path = "move/to/path"
-        self.backend.move_files([to_move], to_path)
-        # no need to delete it
-        client.unlink.assert_not_called()
-        # rename gets called
-        client.rename.assert_called_with(to_move, to_move.replace("from", "to"))
-        # now try to override destination
-        client.lstat.side_effect = None
-        client.lstat.return_value = True
-        self.backend.move_files([to_move], to_path)
-        # client will delete it first
-        client.unlink.assert_called_with(to_move.replace("from", "to"))
-        # then move it
-        client.rename.assert_called_with(to_move, to_move.replace("from", "to"))
+    def test_setting_and_getting_data_from_dir(self):
+        # bypass as we tested all the methods mocked specifically above
+        # Would be nice to have an integration test but is not feasible ATM.
+        pass

@@ -1,6 +1,6 @@
 # Copyright 2017 Akretion (http://www.akretion.com).
 # @author Sébastien BEAU <sebastien.beau@akretion.com>
-# License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl).
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 import base64
 import hashlib
@@ -34,16 +34,6 @@ class StorageFile(models.Model):
         "storage.backend", "Storage", index=True, required=True
     )
     url = fields.Char(compute="_compute_url", help="HTTP accessible path to the file")
-    url_path = fields.Char(
-        compute="_compute_url_path", help="Accessible path, no base URL"
-    )
-    internal_url = fields.Char(
-        compute="_compute_internal_url",
-        help="HTTP URL to load the file directly from storage.",
-    )
-    slug = fields.Char(
-        compute="_compute_slug", help="Slug-ified name with ID for URL", store=True
-    )
     relative_path = fields.Char(readonly=True, help="Relative location for backend")
     file_size = fields.Integer("File Size")
     human_file_size = fields.Char(
@@ -89,15 +79,10 @@ class StorageFile(models.Model):
         for record in self:
             record.human_file_size = human_size(record.file_size)
 
-    @api.depends("filename", "extension")
-    def _compute_slug(self):
-        for record in self:
-            record.slug = record._slugify_name_with_id()
-
     def _slugify_name_with_id(self):
-        return "{}{}".format(
+        return u"{}{}".format(
             slugify(
-                "{}-{}".format(self.filename, self.id), regex_pattern=REGEX_SLUGIFY
+                u"{}-{}".format(self.filename, self.id), regex_pattern=REGEX_SLUGIFY
             ),
             self.extension,
         )
@@ -116,7 +101,7 @@ class StorageFile(models.Model):
         if strategy == "hash":
             return checksum[:2] + "/" + checksum
         elif strategy == "name_with_id":
-            return self.slug
+            return self._slugify_name_with_id()
 
     def _prepare_meta_for_file(self):
         bin_data = base64.b64decode(self.data)
@@ -131,11 +116,8 @@ class StorageFile(models.Model):
     def _inverse_data(self):
         for record in self:
             record.write(record._prepare_meta_for_file())
-            record.backend_id.sudo().add(
-                record.relative_path,
-                record.data,
-                mimetype=record.mimetype,
-                binary=False,
+            record.backend_id.sudo()._add_b64_data(
+                record.relative_path, record.data, mimetype=record.mimetype
             )
 
     def _compute_data(self):
@@ -143,52 +125,43 @@ class StorageFile(models.Model):
             if self._context.get("bin_size"):
                 rec.data = rec.file_size
             elif rec.relative_path:
-                rec.data = rec.backend_id.sudo().get(rec.relative_path, binary=False)
+                rec.data = rec.backend_id.sudo()._get_b64_data(rec.relative_path)
             else:
                 rec.data = None
 
-    @api.depends("relative_path", "backend_id")
+    @api.depends(
+        "backend_id.served_by",
+        "backend_id.base_url",
+        "backend_id.url_include_directory_path",
+        "relative_path",
+    )
     def _compute_url(self):
         for record in self:
             record.url = record._get_url()
 
-    @api.depends("relative_path", "backend_id")
-    def _compute_url_path(self):
-        # Keep this separated from `url` to avoid multiple compute:
-        # you'll need either one or the other.
-        for record in self:
-            record.url_path = record._get_url(exclude_base_url=True)
-
-    def _get_url(self, exclude_base_url=False):
-        """Retrieve file URL based on backend params.
-
-        :param exclude_base_url: skip base_url
-        """
-        return self.backend_id._get_url_for_file(
-            self, exclude_base_url=exclude_base_url
-        )
-
-    @api.depends("slug")
-    def _compute_internal_url(self):
-        for record in self:
-            record.internal_url = record._get_internal_url()
-
-    def _get_internal_url(self):
-        """Retrieve file URL to load file directly from the storage.
-
-        It is recommended to use this for Odoo backend internal usage
-        to not generate traffic on external services.
-        """
-        return f"/storage.file/{self.slug}"
+    def _get_url(self):
+        """Retrieve file URL based on backend params."""
+        backend = self.backend_id.sudo()
+        parts = []
+        if backend.served_by == "odoo":
+            params = self.env["ir.config_parameter"].sudo()
+            parts = [
+                params.get_param("web.base.url"),
+                "storage.file",
+                self._slugify_name_with_id(),
+            ]
+        else:
+            parts = [backend.base_url or ""]
+            if backend.url_include_directory_path and backend.directory_path:
+                parts.append(backend.directory_path)
+            parts.append(self.relative_path or "")
+        return "/".join(parts)
 
     @api.depends("name")
     def _compute_extract_filename(self):
         for rec in self:
-            if rec.name:
-                rec.filename, rec.extension = os.path.splitext(rec.name)
-                mime, __ = mimetypes.guess_type(rec.name)
-            else:
-                rec.filename = rec.extension = mime = False
+            rec.filename, rec.extension = os.path.splitext(rec.name)
+            mime, __ = mimetypes.guess_type(rec.name)
             rec.mimetype = mime
 
     def unlink(self):
@@ -200,9 +173,6 @@ class StorageFile(models.Model):
 
     @api.model
     def _clean_storage_file(self):
-        # we must be sure that all the changes are into the DB since
-        # we by pass the ORM
-        self.flush()
         self._cr.execute(
             """SELECT id
             FROM storage_file
@@ -210,11 +180,8 @@ class StorageFile(models.Model):
         )
         ids = [x[0] for x in self._cr.fetchall()]
         for st_file in self.browse(ids):
-            st_file.backend_id.sudo().delete(st_file.relative_path)
+            st_file.backend_id.sudo()._delete(st_file.relative_path)
             st_file.with_context(cleanning_storage_file=True).unlink()
-            # commit is required since the backend could be an external system
-            # therefore, if the record is deleted on the external system
-            # we must be sure that the record is also deleted into Odoo
             st_file._cr.commit()
 
     @api.model

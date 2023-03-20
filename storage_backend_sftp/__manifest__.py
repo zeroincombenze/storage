@@ -1,15 +1,15 @@
 # Copyright 2017 Akretion (http://www.akretion.com).
 # @author Sébastien BEAU <sebastien.beau@akretion.com>
-# License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl).
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 {
     "name": "Storage Backend SFTP",
     "summary": "Implement SFTP Storage",
-    "version": "14.0.2.0.2",
+    "version": "12.0.2.0.0",
     "category": "Storage",
     "website": "https://github.com/OCA/storage",
     "author": " Akretion,Odoo Community Association (OCA)",
-    "license": "LGPL-3",
+    "license": "AGPL-3",
     "installable": True,
     "external_dependencies": {"python": ["paramiko"]},
     "depends": ["storage_backend"],

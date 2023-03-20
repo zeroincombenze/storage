@@ -2,13 +2,12 @@
 # @author Sébastien BEAU <sebastien.beau@akretion.com>
 # Copyright 2019 Camptocamp SA (http://www.camptocamp.com).
 # @author Simone Orsi <simone.orsi@camptocamp.com>
-# License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl).
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 import io
 import logging
 
 from odoo import _, exceptions
-
 from odoo.addons.component.core import Component
 
 _logger = logging.getLogger(__name__)
@@ -30,15 +29,14 @@ class S3StorageAdapter(Component):
         params = {
             "aws_access_key_id": self.collection.aws_access_key_id,
             "aws_secret_access_key": self.collection.aws_secret_access_key,
+            "region_name": self.collection.aws_region,
         }
         if self.collection.aws_host:
             params["endpoint_url"] = self.collection.aws_host
-
-        if self.collection.aws_region:
-            if self.collection.aws_region != "other":
-                params["region_name"] = self.collection.aws_region
-            elif self.collection.aws_other_region:
-                params["region_name"] = self.collection.aws_other_region
+        if not params["region_name"]:
+            # For some providers,
+            # region must be excluded, otherwise endpoint is ignored
+            params.pop("region_name", None)
         return params
 
     def _get_bucket(self):
@@ -66,7 +64,9 @@ class S3StorageAdapter(Component):
             else:
                 bucket = s3.create_bucket(
                     Bucket=bucket_name,
-                    CreateBucketConfiguration={"LocationConstraint": region_name},
+                    CreateBucketConfiguration={
+                        "LocationConstraint": region_name
+                    },
                 )
         return bucket
 
@@ -79,7 +79,9 @@ class S3StorageAdapter(Component):
 
     def add(self, relative_path, bin_data, mimetype=None, **kwargs):
         s3object = self._get_object(relative_path)
-        file_params = self._aws_upload_fileobj_params(mimetype=mimetype, **kwargs)
+        file_params = self._aws_upload_fileobj_params(
+            mimetype=mimetype, **kwargs
+        )
         with io.BytesIO() as fileobj:
             fileobj.write(bin_data)
             fileobj.seek(0)
@@ -87,7 +89,9 @@ class S3StorageAdapter(Component):
                 s3object.upload_fileobj(fileobj, **file_params)
             except ClientError as error:
                 # log verbose error from s3, return short message for user
-                _logger.exception("Error during storage of the file %s" % relative_path)
+                _logger.exception(
+                    "Error during storage of the file %s" % relative_path
+                )
                 raise exceptions.UserError(
                     _("The file could not be stored: %s") % str(error)
                 )

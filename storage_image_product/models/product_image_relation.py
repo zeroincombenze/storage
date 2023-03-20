@@ -1,8 +1,13 @@
 # Copyright 2018 Akretion (http://www.akretion.com).
 # @author Raphaël Reverdy <https://github.com/hparfr>
-# License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl).
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+
+
+import logging
 
 from odoo import api, fields, models
+
+_logger = logging.getLogger(__name__)
 
 
 class ProductImageRelation(models.Model):
@@ -11,9 +16,7 @@ class ProductImageRelation(models.Model):
     _description = "Product Image Relation"
 
     attribute_value_ids = fields.Many2many(
-        "product.attribute.value",
-        string="Attributes",
-        domain="[('id', 'in', available_attribute_value_ids)]",
+        "product.attribute.value", string="Attributes"
     )
     # This field will list all attribute value used by the template
     # in order to filter the attribute value available for the current image
@@ -22,18 +25,8 @@ class ProductImageRelation(models.Model):
         string="Available Attributes",
         compute="_compute_available_attribute",
     )
-    product_tmpl_id = fields.Many2one(
-        "product.template",
-        required=True,
-        ondelete="cascade",
-        index=True,
-    )
-    tag_id = fields.Many2one(
-        "image.tag",
-        string="Tag",
-        domain=[("apply_on", "=", "product")],
-        index=True,
-    )
+    product_tmpl_id = fields.Many2one("product.template")
+    tag_id = fields.Many2one("image.tag", domain=[("apply_on", "=", "product")])
 
     @api.depends("image_id", "product_tmpl_id.attribute_line_ids.value_ids")
     def _compute_available_attribute(self):
@@ -42,9 +35,3 @@ class ProductImageRelation(models.Model):
             rec.available_attribute_value_ids = rec.product_tmpl_id.mapped(
                 "attribute_line_ids.value_ids"
             )
-
-    def _match_variant(self, variant):
-        variant_attribute_values = variant.mapped(
-            "product_template_attribute_value_ids.product_attribute_value_id"
-        )
-        return not bool(self.attribute_value_ids - variant_attribute_values)

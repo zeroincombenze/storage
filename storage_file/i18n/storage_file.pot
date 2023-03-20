@@ -1,12 +1,12 @@
 # Translation of Odoo Server.
 # This file contains the translation of the following modules:
-# 	* storage_file
+#	* storage_file
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Odoo Server 14.0\n"
+"Project-Id-Version: Odoo Server 12.0\n"
 "Report-Msgid-Bugs-To: \n"
-"Last-Translator: \n"
+"Last-Translator: <>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -14,33 +14,13 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. module: storage_file
-#: model:ir.model.fields,help:storage_file.field_storage_file__url_path
-msgid "Accessible path, no base URL"
-msgstr ""
-
-#. module: storage_file
 #: model:ir.model.fields,field_description:storage_file.field_storage_file__active
 msgid "Active"
 msgstr ""
 
 #. module: storage_file
-#: model:ir.model.fields,field_description:storage_file.field_storage_backend__backend_view_use_internal_url
-msgid "Backend View Use Internal Url"
-msgstr ""
-
-#. module: storage_file
-#: model_terms:ir.ui.view,arch_db:storage_file.storage_backend_view_form
-msgid "Base URL used for files"
-msgstr ""
-
-#. module: storage_file
 #: model:ir.model.fields,field_description:storage_file.field_storage_backend__base_url
 msgid "Base Url"
-msgstr ""
-
-#. module: storage_file
-#: model:ir.model.fields,field_description:storage_file.field_storage_backend__base_url_for_files
-msgid "Base Url For Files"
 msgstr ""
 
 #. module: storage_file
@@ -81,24 +61,13 @@ msgid "Datas"
 msgstr ""
 
 #. module: storage_file
-#: model:ir.model.fields,help:storage_file.field_storage_backend__backend_view_use_internal_url
-msgid ""
-"Decide if Odoo backend views should use the external URL (usually a CDN) or "
-"the internal url with direct access to the storage. This could save you some"
-" money if you pay by CDN traffic."
-msgstr ""
-
-#. module: storage_file
 #: model:ir.model.fields,help:storage_file.field_storage_backend__is_public
-msgid ""
-"Define if every files stored into this backend are public or not. Examples:\n"
+msgid "Define if every files stored into this backend are public or not. Examples:\n"
 "Private: your file/image can not be displayed is the user is not logged (not available on other website);\n"
 "Public: your file/image can be displayed if nobody is logged (useful to display files on external websites)"
 msgstr ""
 
 #. module: storage_file
-#: model:ir.model.fields,field_description:storage_file.field_ir_actions_report__display_name
-#: model:ir.model.fields,field_description:storage_file.field_storage_backend__display_name
 #: model:ir.model.fields,field_description:storage_file.field_storage_file__display_name
 msgid "Display Name"
 msgstr ""
@@ -109,7 +78,7 @@ msgid "Extension"
 msgstr ""
 
 #. module: storage_file
-#: model:ir.model.fields.selection,name:storage_file.selection__storage_backend__served_by__external
+#: selection:storage.backend,served_by:0
 msgid "External"
 msgstr ""
 
@@ -133,7 +102,7 @@ msgid "File Type"
 msgstr ""
 
 #. module: storage_file
-#: code:addons/storage_file/models/storage_file.py:0
+#: code:addons/storage_file/models/storage_file.py:73
 #, python-format
 msgid "File can not be updated,remove it and create a new one"
 msgstr ""
@@ -149,11 +118,6 @@ msgid "Filename without extension"
 msgstr ""
 
 #. module: storage_file
-#: model:ir.model.fields,help:storage_file.field_storage_file__internal_url
-msgid "HTTP URL to load the file directly from storage."
-msgstr ""
-
-#. module: storage_file
 #: model:ir.model.fields,help:storage_file.field_storage_file__url
 msgid "HTTP accessible path to the file"
 msgstr ""
@@ -164,22 +128,13 @@ msgid "Human File Size"
 msgstr ""
 
 #. module: storage_file
-#: model:ir.model.fields,field_description:storage_file.field_ir_actions_report__id
-#: model:ir.model.fields,field_description:storage_file.field_storage_backend__id
 #: model:ir.model.fields,field_description:storage_file.field_storage_file__id
 msgid "ID"
 msgstr ""
 
 #. module: storage_file
-#: model_terms:ir.ui.view,arch_db:storage_file.storage_backend_view_form
-msgid ""
-"If you have changed parameters via server env settings the URL might look "
-"outdated."
-msgstr ""
-
-#. module: storage_file
-#: model:ir.model.fields,field_description:storage_file.field_storage_file__internal_url
-msgid "Internal Url"
+#: selection:storage.file,file_type:0
+msgid "Image"
 msgstr ""
 
 #. module: storage_file
@@ -188,8 +143,6 @@ msgid "Is Public"
 msgstr ""
 
 #. module: storage_file
-#: model:ir.model.fields,field_description:storage_file.field_ir_actions_report____last_update
-#: model:ir.model.fields,field_description:storage_file.field_storage_backend____last_update
 #: model:ir.model.fields,field_description:storage_file.field_storage_file____last_update
 msgid "Last Modified on"
 msgstr ""
@@ -215,25 +168,18 @@ msgid "Name"
 msgstr ""
 
 #. module: storage_file
-#: model:ir.model.fields.selection,name:storage_file.selection__storage_backend__filename_strategy__name_with_id
+#: selection:storage.backend,filename_strategy:0
 msgid "Name and ID"
 msgstr ""
 
 #. module: storage_file
 #: model:ir.model.fields,help:storage_file.field_storage_backend__url_include_directory_path
-msgid ""
-"Normally the directory_path it's for internal usage. If this flag is enabled"
-" the path will be used to compute the public URL."
+msgid "Normally the directory_path it's for internal usage. If this flag is enabled the path will be used to compute the public URL."
 msgstr ""
 
 #. module: storage_file
-#: model:ir.model.fields.selection,name:storage_file.selection__storage_backend__served_by__odoo
+#: selection:storage.backend,served_by:0
 msgid "Odoo"
-msgstr ""
-
-#. module: storage_file
-#: model_terms:ir.ui.view,arch_db:storage_file.storage_backend_view_form
-msgid "Recompute base URL for files"
 msgstr ""
 
 #. module: storage_file
@@ -247,12 +193,7 @@ msgid "Relative location for backend"
 msgstr ""
 
 #. module: storage_file
-#: model:ir.model,name:storage_file.model_ir_actions_report
-msgid "Report Action"
-msgstr ""
-
-#. module: storage_file
-#: model:ir.model.fields.selection,name:storage_file.selection__storage_backend__filename_strategy__hash
+#: selection:storage.backend,filename_strategy:0
 msgid "SHA hash"
 msgstr ""
 
@@ -263,30 +204,14 @@ msgstr ""
 
 #. module: storage_file
 #: model_terms:ir.ui.view,arch_db:storage_file.storage_backend_view_form
-msgid ""
-"Served by Odoo option will use `web.base.url` as the base URL.\n"
+msgid "Served by Odoo option will use `web.base.url` as the base URL.\n"
 "                    <br/>Make sure this parameter is properly configured and accessible\n"
 "                    from everwhere you want to access the service."
 msgstr ""
 
 #. module: storage_file
-#: model:ir.model.fields,field_description:storage_file.field_storage_file__slug
-msgid "Slug"
-msgstr ""
-
-#. module: storage_file
-#: model:ir.model.fields,help:storage_file.field_storage_file__slug
-msgid "Slug-ified name with ID for URL"
-msgstr ""
-
-#. module: storage_file
 #: model:ir.model.fields,field_description:storage_file.field_storage_file__backend_id
 msgid "Storage"
-msgstr ""
-
-#. module: storage_file
-#: model:ir.model,name:storage_file.model_storage_backend
-msgid "Storage Backend"
 msgstr ""
 
 #. module: storage_file
@@ -296,23 +221,26 @@ msgstr ""
 
 #. module: storage_file
 #: model:ir.model.fields,help:storage_file.field_storage_backend__filename_strategy
-msgid ""
-"Strategy to build the name of the file to be stored.\n"
+msgid "Strategy to build the name of the file to be stored.\n"
 "Name and ID: will store the file with its name + its id.\n"
 "SHA Hash: will use the hash of the file as filename (same method as the native attachment storage)"
 msgstr ""
 
 #. module: storage_file
-#: code:addons/storage_file/models/storage_file.py:0
+#: code:addons/storage_file/models/storage_file.py:95
 #, python-format
-msgid ""
-"The filename strategy is empty for the backend %s.\n"
+msgid "The filename strategy is empty for the backend %s.\n"
 "Please configure it"
 msgstr ""
 
 #. module: storage_file
-#: model:ir.model.constraint,message:storage_file.constraint_storage_file_path_uniq
+#: sql_constraint:storage.file:0
 msgid "The private path must be uniq per backend"
+msgstr ""
+
+#. module: storage_file
+#: selection:storage.file,file_type:0
+msgid "Thumbnail"
 msgstr ""
 
 #. module: storage_file
@@ -331,17 +259,7 @@ msgid "Url Include Directory Path"
 msgstr ""
 
 #. module: storage_file
-#: model:ir.model.fields,field_description:storage_file.field_storage_file__url_path
-msgid "Url Path"
+#: model:ir.model,name:storage_file.model_storage_backend
+msgid "storage.backend"
 msgstr ""
 
-#. module: storage_file
-#: model_terms:ir.ui.view,arch_db:storage_file.storage_backend_view_form
-msgid ""
-"When served by external service you might have special environment configuration\n"
-"                    for building final files URLs.\n"
-"                    <br/>For performance reasons, the base URL is computed and stored.\n"
-"                    If you change some parameters (eg: in local dev environment or special instances)\n"
-"                    and you still want to see the images you might need to refresh this URL\n"
-"                    to make sure images and/or files are loaded correctly."
-msgstr ""

@@ -1,6 +1,6 @@
 # Copyright 2017 Akretion (http://www.akretion.com).
 # @author Sébastien BEAU <sebastien.beau@akretion.com>
-# License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl).
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 import base64
 from urllib import parse
@@ -33,10 +33,10 @@ class StorageFileCase(TransactionComponentCase):
     def test_create_and_read_served_by_odoo(self):
         stfile = self._create_storage_file()
         self.assertEqual(stfile.data, self.filedata)
-        self.assertEqual(stfile.mimetype, "text/plain")
-        self.assertEqual(stfile.extension, ".txt")
-        self.assertEqual(stfile.filename, "test of my_file")
-        self.assertEqual(stfile.relative_path, "test-of-my_file-%s.txt" % stfile.id)
+        self.assertEqual(stfile.mimetype, u"text/plain")
+        self.assertEqual(stfile.extension, u".txt")
+        self.assertEqual(stfile.filename, u"test of my_file")
+        self.assertEqual(stfile.relative_path, u"test-of-my_file-%s.txt" % stfile.id)
         url = parse.urlparse(stfile.url)
         self.assertEqual(url.path, "/storage.file/test-of-my_file-%s.txt" % stfile.id)
         self.assertEqual(stfile.file_size, self.filesize)
@@ -57,34 +57,6 @@ class StorageFileCase(TransactionComponentCase):
             "test-999-%s" % stfile.id
         )
         self.assertEqual(stfile, stfile2)
-
-    def test_slug(self):
-        stfile = self._create_storage_file()
-        self.assertEqual(
-            stfile.slug,
-            "test-of-my_file-{}.txt".format(stfile.id),
-        )
-        stfile.name = "Name has changed.png"
-        self.assertEqual(
-            stfile.slug,
-            "name-has-changed-{}.png".format(stfile.id),
-        )
-
-    def test_internal_url(self):
-        stfile = self._create_storage_file()
-        self.assertEqual(
-            stfile.internal_url,
-            "/storage.file/test-of-my_file-{}.txt".format(stfile.id),
-        )
-        stfile.name = "Name has changed.png"
-        self.assertEqual(
-            stfile.slug,
-            "name-has-changed-{}.png".format(stfile.id),
-        )
-        self.assertEqual(
-            stfile.internal_url,
-            "/storage.file/name-has-changed-{}.png".format(stfile.id),
-        )
 
     def test_url(self):
         stfile = self._create_storage_file()
@@ -113,54 +85,15 @@ class StorageFileCase(TransactionComponentCase):
             stfile.url, "https://foo.com/baz/test-of-my_file-{}.txt".format(stfile.id)
         )
 
-    def test_url_without_base_url(self):
-        stfile = self._create_storage_file()
-        # served by odoo
-        self.assertEqual(
-            stfile.url_path,
-            "/storage.file/test-of-my_file-{}.txt".format(stfile.id),
-        )
-        # served by external
-        stfile.backend_id.update(
-            {
-                "served_by": "external",
-                "base_url": "https://foo.com",
-                "directory_path": "baz",
-            }
-        )
-        stfile.invalidate_cache()
-        # path not included
-        self.assertEqual(
-            stfile.with_context(foo=1).url_path,
-            "/test-of-my_file-{}.txt".format(stfile.id),
-        )
-        # path included
-        stfile.backend_id.url_include_directory_path = True
-        stfile.invalidate_cache()
-        self.assertEqual(
-            stfile.url_path,
-            "/baz/test-of-my_file-{}.txt".format(stfile.id),
-        )
-
-    def test_url_for_report(self):
-        stfile = self._create_storage_file()
-        params = self.env["ir.config_parameter"].sudo()
-        params.set_param("report.url", "http://report.url")
-        # served by odoo
-        self.assertEqual(
-            stfile.with_context(print_report_pdf=True).url,
-            "http://report.url/storage.file/test-of-my_file-{}.txt".format(stfile.id),
-        )
-
     def test_create_store_with_hash(self):
         self.backend.filename_strategy = "hash"
         stfile = self._create_storage_file()
         self.assertEqual(stfile.data, self.filedata)
-        self.assertEqual(stfile.mimetype, "text/plain")
-        self.assertEqual(stfile.extension, ".txt")
-        self.assertEqual(stfile.filename, "test of my_file")
+        self.assertEqual(stfile.mimetype, u"text/plain")
+        self.assertEqual(stfile.extension, u".txt")
+        self.assertEqual(stfile.filename, u"test of my_file")
         self.assertEqual(
-            stfile.relative_path, "13/1322d9ccb3d257095185b205eadc9307aae5dc84"
+            stfile.relative_path, u"13/1322d9ccb3d257095185b205eadc9307aae5dc84"
         )
 
     def test_missing_name_strategy(self):
@@ -181,7 +114,7 @@ class StorageFileCase(TransactionComponentCase):
 
     def test_read_bin_size(self):
         stfile = self._create_storage_file()
-        self.assertEqual(stfile.with_context(bin_size=True).data, b"21.00 bytes")
+        self.assertEqual(stfile.with_context(bin_size=True).data, "21.00 bytes")
 
     def test_cannot_update_data(self):
         stfile = self._create_storage_file()
@@ -204,7 +137,7 @@ class StorageFileCase(TransactionComponentCase):
         # Check the the storage file is set to delete
         # and the file still exist on the storage
         self.assertEqual(stfile.to_delete, True)
-        self.assertIn(relative_path, backend.list_files())
+        self.assertIn(relative_path, backend._list())
 
         # Run the method to clean the storage.file
         self.env["storage.file"]._clean_storage_file()
@@ -216,7 +149,7 @@ class StorageFileCase(TransactionComponentCase):
             .search([("id", "=", stfile.id)])
         )
         self.assertEqual(len(files), 0)
-        self.assertNotIn(relative_path, backend.list_files())
+        self.assertNotIn(relative_path, backend._list())
 
     def test_public_access1(self):
         """
@@ -234,13 +167,9 @@ class StorageFileCase(TransactionComponentCase):
         self.assertFalse(storage_file.backend_id.is_public)
         # Public user used on the controller when authentication is 'public'
         public_user = self.env.ref("base.public_user")
+        env = self.env(user=public_user)
         with self.assertRaises(AccessError):
-            # BUG OR NOT with_user doesn't invalidate the cache...
-            # force cache invalidation
-            self.env.cache.invalidate()
-            self.env[storage_file._name].with_user(public_user).browse(
-                storage_file.ids
-            ).name
+            env[storage_file._name].browse(storage_file.ids).name
         return True
 
     def test_public_access2(self):
@@ -308,4 +237,4 @@ class StorageFileCase(TransactionComponentCase):
     def test_empty(self):
         # get_url is called on new records
         empty = self.env["storage.file"].new({})._get_url()
-        self.assertEqual(empty, "")
+        self.assertEqual(empty, "/")

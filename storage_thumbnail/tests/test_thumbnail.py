@@ -1,120 +1,80 @@
 import base64
 import os
-
-from odoo_test_helper import FakeModelLoader
+from operator import attrgetter
 
 from odoo.fields import first
 
-from odoo.addons.component.tests.common import SavepointComponentCase
+from odoo.addons.component.tests.common import TransactionComponentCase
+
+from .models import ModelTest
 
 
-class TestStorageThumbnail(SavepointComponentCase):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.loader = FakeModelLoader(cls.env, cls.__module__)
-        cls.loader.backup_registry()
-        from .models import ModelTest
+class TestStorageThumbnail(TransactionComponentCase):
+    def setUp(self):
+        super().setUp()
 
-        cls.loader.update_registry((ModelTest,))
+        # Register model inheritance
+        ModelTest._build_model(self.env.registry, self.env.cr)
+        self.env.registry.setup_models(self.env.cr)
+        ctx = dict(self.env.context, update_custom_fields=True, module="base")
+        self.env.registry.init_models(self.env.cr, [ModelTest._name], ctx)
+
+        # create model
         path = os.path.dirname(os.path.abspath(__file__))
         with open(os.path.join(path, "static/akretion-logo.png"), "rb") as f:
             data = f.read()
-        cls.filesize = len(data)
-        cls.filedata = base64.b64encode(data)
-        cls.filename = "akretion-logo.png"
+        self.filesize = len(data)
+        self.filedata = base64.b64encode(data)
+        self.filename = "akretion-logo.png"
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.loader.restore_registry()
-        super().tearDownClass()
+    def tearDown(self):
+        super().tearDown()
+        env = self.env
+        del env.registry.models[ModelTest._name]
+        parents = ModelTest._inherit
+        parents = [parents] if isinstance(parents, str) else (parents or [])
+        # keep a copy to be sure to not modify the original _inherit
+        parents = list(parents)
+        parents.extend(ModelTest._inherits.keys())
+        parents.append("base")
+        funcs = [attrgetter(kind + "_children") for kind in ["_inherits", "_inherit"]]
+        for parent in parents:
+            for func in funcs:
+                children = func(env.registry[parent])
+                if ModelTest._name in children:
+                    # at this stage our cls is referenced as children of
+                    # parent -> must un reference it
+                    children.remove(ModelTest._name)
 
     def _create_thumbnail(self):
         # create thumbnail
         vals = {"name": "TEST THUMB"}
-        return self.env["storage.thumbnail"].create(vals)
+        self.thumbnail = self.env["storage.thumbnail"].create(vals)
 
-    def _create_image(self, resize=False, **kw):
+    def _create_model(self, resize=False):
         if resize:
             self.env["ir.config_parameter"].sudo().create(
                 {"key": "storage.image.resize.format", "value": ".webp"}
             )
-        vals = {"name": self.filename, "data": self.filedata}
-        vals.update(kw)
-        return self.env["model.test"].create(vals)
+        vals = {"name": self.filename, "image_medium_url": self.filedata}
+        self.image = self.env["model.test"].create(vals)
 
     def test_thumbnail(self):
-        thumb = self._create_thumbnail()
-        self.assertTrue(thumb.url)
-        file_id = thumb.file_id
+        self._create_thumbnail()
+        self.assertTrue(self.thumbnail.url)
+        file_id = self.thumbnail.file_id
         self.assertTrue(file_id)
-        thumb.unlink()
+
+        self.thumbnail.unlink()
         self.assertTrue(file_id.to_delete)
 
     def test_model(self):
-        image = self._create_image()
-        self.assertTrue(image.url)
-        self.assertEqual(2, len(image.thumbnail_ids))
-        self.assertEqual(".png", first(image.thumbnail_ids).extension)
+        self._create_model()
+        self.assertTrue(self.image.url)
+        self.assertEquals(2, len(self.image.thumbnail_ids))
+        self.assertEquals(".png", first(self.image.thumbnail_ids).extension)
 
     def test_model_resize(self):
-        image = self._create_image(resize=True)
-        self.assertIn("webp", first(image.thumbnail_ids).url)
-        self.assertEqual(".webp", first(image.thumbnail_ids).extension)
-
-    def test_medium_small(self):
-        image = self._create_image()
-        self.assertEqual(image.thumb_medium_id.size_x, 128)
-        self.assertEqual(image.thumb_medium_id.size_y, 128)
-        self.assertEqual(image.thumb_small_id.size_x, 64)
-        self.assertEqual(image.thumb_small_id.size_y, 64)
-
-    def test_urls(self):
-        image1 = self._create_image()
-        image2 = self._create_image(name="another.png")
-        images = image1 + image2
-        # Make it server externally
-        self.assertFalse(image1.backend_id.backend_view_use_internal_url)
-        image1.backend_id.served_by = "external"
-        cdn = "https://somewhere.com"
-        image1.backend_id.base_url = cdn
-
-        t1_med_file = image1.thumb_medium_id.file_id
-        t1_small_file = image1.thumb_small_id.file_id
-        t2_med_file = image2.thumb_medium_id.file_id
-        t2_small_file = image2.thumb_small_id.file_id
-
-        # Internal URL use CDN by default
-        expected = [
-            {
-                "url": f"{cdn}/akretion-logo-{image1.file_id.id}.png",
-                "internal_url": f"/storage.file/akretion-logo-{image1.file_id.id}.png",
-                "image_medium_url": f"{cdn}/akretion-logo_128_128-{t1_med_file.id}.png",
-                "image_small_url": f"{cdn}/akretion-logo_64_64-{t1_small_file.id}.png",
-            },
-            {
-                "url": f"{cdn}/another-{image2.file_id.id}.png",
-                "internal_url": f"/storage.file/another-{image2.file_id.id}.png",
-                "image_medium_url": f"{cdn}/another_128_128-{t2_med_file.id}.png",
-                "image_small_url": f"{cdn}/another_64_64-{t2_small_file.id}.png",
-            },
-        ]
-        self.assertRecordValues(images, expected)
-        # Unless we enforce it
-        image1.backend_id.backend_view_use_internal_url = True
-        images.invalidate_cache()
-        expected = [
-            {
-                "url": f"{cdn}/akretion-logo-{image1.file_id.id}.png",
-                "internal_url": f"/storage.file/akretion-logo-{image1.file_id.id}.png",
-                "image_medium_url": f"/storage.file/akretion-logo_128_128-{t1_med_file.id}.png",
-                "image_small_url": f"/storage.file/akretion-logo_64_64-{t1_small_file.id}.png",
-            },
-            {
-                "url": f"{cdn}/another-{image2.file_id.id}.png",
-                "internal_url": f"/storage.file/another-{image2.file_id.id}.png",
-                "image_medium_url": f"/storage.file/another_128_128-{t2_med_file.id}.png",
-                "image_small_url": f"/storage.file/another_64_64-{t2_small_file.id}.png",
-            },
-        ]
-        self.assertRecordValues(images, expected)
+        self._create_model(resize=True)
+        self.assertIn("webp", first(self.image.thumbnail_ids).url)
+        self.assertEquals(".webp", first(self.image.thumbnail_ids).extension)

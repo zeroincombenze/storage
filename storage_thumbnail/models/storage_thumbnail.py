@@ -1,6 +1,6 @@
 # Copyright 2017 Akretion (http://www.akretion.com).
 # @author Sébastien BEAU <sebastien.beau@akretion.com>
-# License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl).
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 import base64
 import logging
@@ -8,7 +8,7 @@ import logging
 import requests
 
 from odoo import api, fields, models
-from odoo.tools import ImageProcess
+from odoo.tools import image_resize_image
 
 _logger = logging.getLogger(__name__)
 
@@ -19,8 +19,8 @@ class StorageThumbnail(models.Model):
     _inherits = {"storage.file": "file_id"}
     _default_file_type = "thumbnail"
 
-    size_x = fields.Integer("X size")
-    size_y = fields.Integer("Y size")
+    size_x = fields.Integer("weight")
+    size_y = fields.Integer("height")
     url_key = fields.Char(
         "Url key", help="Specific URL key for generating the url of the image"
     )
@@ -58,9 +58,8 @@ class StorageThumbnail(models.Model):
         if image_resize_server and image.backend_id.served_by != "odoo":
             values = {"url": image.url, "width": size_x, "height": size_y, "fmt": fmt}
             url = image_resize_server.format(**values)
-            return base64.encodebytes(requests.get(url).content)
-        image_process = ImageProcess(image.data)
-        return image_process.resize(max_width=size_x, max_height=size_y).image_base64()
+            return base64.encodestring(requests.get(url).content)
+        return image_resize_image(image.data, size=(size_x, size_y))
 
     def _get_default_backend_id(self):
         """Choose the correct backend.

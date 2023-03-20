@@ -1,19 +1,19 @@
 # Copyright 2017 Akretion (http://www.akretion.com).
 # @author Sébastien BEAU <sebastien.beau@akretion.com>
-# License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl).
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 {
     "name": "Storage File",
     "summary": "Storage file in storage backend",
-    "version": "14.0.2.3.0",
+    "version": "12.0.2.0.2",
     "category": "Storage",
-    "website": "https://github.com/OCA/storage",
+    "website": "https://www.github.com/OCA/storage",
     "author": " Akretion, Odoo Community Association (OCA)",
-    "license": "LGPL-3",
-    "development_status": "Production/Stable",
+    "license": "AGPL-3",
+    "development_status": "Stable/Production",
     "application": False,
     "installable": True,
-    "external_dependencies": {"python": ["python_slugify"]},
+    "external_dependencies": {"python": ["slugify"]},
     "depends": ["storage_backend"],
     "data": [
         "views/storage_file_view.xml",

@@ -1,6 +1,6 @@
 # Copyright 2020 Akretion (http://www.akretion.com).
 # @author Raphaël Reverdy <raphael.reverdy@akretion.com>
-# License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl).
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 
 from odoo import fields, models

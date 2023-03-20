@@ -1,12 +1,12 @@
 # Translation of Odoo Server.
 # This file contains the translation of the following modules:
-# 	* storage_backend
+#	* storage_backend
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Odoo Server 14.0\n"
+"Project-Id-Version: Odoo Server 12.0\n"
 "Report-Msgid-Bugs-To: \n"
-"Last-Translator: \n"
+"Last-Translator: <>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -14,9 +14,15 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. module: storage_backend
-#: code:addons/storage_backend/components/filesystem_adapter.py:0
+#: code:addons/storage_backend/components/filesystem_adapter.py:37
 #, python-format
 msgid "Access to %s is forbidden"
+msgstr ""
+
+#. module: storage_backend
+#: selection:storage.backend,backend_type:0
+#: selection:storage.backend,backend_type_env_default:0
+msgid "Amazon S3"
 msgstr ""
 
 #. module: storage_backend
@@ -32,18 +38,6 @@ msgstr ""
 #. module: storage_backend
 #: model:ir.model.fields,field_description:storage_backend.field_storage_backend__backend_type_env_is_editable
 msgid "Backend Type Env Is Editable"
-msgstr ""
-
-#. module: storage_backend
-#: code:addons/storage_backend/models/storage_backend.py:0
-#, python-format
-msgid "Connection Test Failed!"
-msgstr ""
-
-#. module: storage_backend
-#: code:addons/storage_backend/models/storage_backend.py:0
-#, python-format
-msgid "Connection Test Succeeded!"
 msgstr ""
 
 #. module: storage_backend
@@ -77,19 +71,9 @@ msgid "Display Name"
 msgstr ""
 
 #. module: storage_backend
-#: code:addons/storage_backend/models/storage_backend.py:0
-#, python-format
-msgid "Everything seems properly set up!"
-msgstr ""
-
-#. module: storage_backend
-#: model:ir.model.fields.selection,name:storage_backend.selection__storage_backend__backend_type__filesystem
+#: selection:storage.backend,backend_type:0
+#: selection:storage.backend,backend_type_env_default:0
 msgid "Filesystem"
-msgstr ""
-
-#. module: storage_backend
-#: model:ir.model.fields,field_description:storage_backend.field_storage_backend__has_validation
-msgid "Has Validation"
 msgstr ""
 
 #. module: storage_backend
@@ -123,13 +107,18 @@ msgid "Relative path to the directory to store the file"
 msgstr ""
 
 #. module: storage_backend
+#: selection:storage.backend,backend_type:0
+#: selection:storage.backend,backend_type_env_default:0
+msgid "SFTP"
+msgstr ""
+
+#. module: storage_backend
 #: model:ir.model.fields,field_description:storage_backend.field_storage_backend__server_env_defaults
 msgid "Server Env Defaults"
 msgstr ""
 
 #. module: storage_backend
 #: model:ir.actions.act_window,name:storage_backend.act_open_storage_backend_view
-#: model:ir.model,name:storage_backend.model_storage_backend
 #: model:ir.ui.menu,name:storage_backend.menu_storage
 #: model:ir.ui.menu,name:storage_backend.menu_storage_backend
 #: model_terms:ir.ui.view,arch_db:storage_backend.storage_backend_view_form
@@ -139,6 +128,7 @@ msgid "Storage Backend"
 msgstr ""
 
 #. module: storage_backend
-#: model_terms:ir.ui.view,arch_db:storage_backend.storage_backend_view_form
-msgid "Test connection"
+#: model:ir.model,name:storage_backend.model_storage_backend
+msgid "storage.backend"
 msgstr ""
+
